@@ -9,8 +9,6 @@ import (
 type Scheduler struct {
 	jobs []*Job
 
-	size int
-
 	running bool
 
 	stop chan bool
@@ -100,11 +98,7 @@ func (s *Scheduler) RemoveJob(name string) bool {
 		return false
 	}
 
-	size := len(s.jobs)
-	for i := (pos + 1); i < size; i++ {
-		s.jobs[i-1] = s.jobs[i]
-	}
-	s.jobs[size-1] = nil
+	s.jobs = s.jobs[:pos+copy(s.jobs[pos:], s.jobs[pos+1:])]
 
 	return true
 }
@@ -161,4 +155,10 @@ func (s *Scheduler) posJob(name string) int {
 	}
 
 	return -1
+}
+
+// job
+
+func (j *Job) GetName() string {
+	return j.jobName
 }

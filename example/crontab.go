@@ -1,4 +1,4 @@
-package example
+package main
 
 import (
 	"gocrontab"
@@ -28,6 +28,10 @@ func main() {
 
 	scheduler.AddJob(15, "testc", printTest2)
 
+	entries := scheduler.Entries()
+	for idx := range entries {
+		fmt.Println(entries[idx].GetName())
+	}
 	fmt.Println(scheduler.Entries())
 }
 
