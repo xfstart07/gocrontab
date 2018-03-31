@@ -8,11 +8,15 @@ import (
 
 func main() {
 	scheduler := gocrontab.NewSchedule()
-	scheduler.NewJob("test1").Every(10).Seconds().Do(printTest1)
+	scheduler.NewJob("test1").Every(10).Seconds().Do(func() {
+		fmt.Println("test1......")
+	})
 
 	scheduler.Start()
 
-	scheduler.NewJob("test2").Every(15).Seconds().Do(printTest2)
+	scheduler.NewJob("test2").Every(15).Seconds().Do(func() {
+		fmt.Println("test2.....")
+	})
 
 	fmt.Println(scheduler.Entries())
 	for {
@@ -26,7 +30,9 @@ func main() {
 	fmt.Println("删除", scheduler.RemoveJob("test2"))
 	fmt.Println("删除", scheduler.RemoveJob("test2"))
 
-	scheduler.NewJob("testc").Every(15).Minutes().Do(printTest2)
+	scheduler.NewJob("testc").Every(15).Minutes().Do(func() {
+		fmt.Println("test2.....")
+	})
 
 	entries := scheduler.Entries()
 	for idx := range entries {
@@ -35,11 +41,3 @@ func main() {
 	fmt.Println(scheduler.Entries())
 }
 
-func printTest1() {
-	fmt.Println("test1......")
-}
-
-func printTest2() {
-	fmt.Println("test2.....")
-	time.Sleep(10 * time.Second)
-}
