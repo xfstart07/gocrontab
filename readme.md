@@ -10,7 +10,7 @@
 
 ## 使用
 
-```
+```go
 scheduler := gocrontab.NewSchedule()
 scheduler.NewJob("test1").Every(10).Seconds().Do(func() {
 	fmt.Println("test1......")
