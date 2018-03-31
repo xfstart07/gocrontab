@@ -1,7 +1,6 @@
 package gocrontab
 
 import (
-	"fmt"
 	"sort"
 	"time"
 )
@@ -23,6 +22,8 @@ type Job struct {
 	jobFunc FuncJob
 
 	interval uint64 // 设定为秒
+
+	unit string // 单位
 
 	period time.Duration // 周期
 
@@ -59,17 +60,18 @@ func (s *Scheduler) Less(i, j int) bool {
 }
 
 // add job
-func (s *Scheduler) AddJob(interval uint64, Name string, jobFunc func()) {
+func (s *Scheduler) NewJob(Name string, jobFunc func()) *Job {
 	job := &Job{
-		interval: interval,
-		period:   time.Duration(interval),
-		lastTime: time.Now(),
+		interval: 0,
+		period: 0,
+		lastTime: time.Unix(0, 0),
+		nextTime: time.Unix(0,0),
 		jobName:  Name,
 		jobFunc:  FuncJob(jobFunc),
 	}
-	job.nextTime = job.lastTime.Add(job.period * time.Second)
-
 	s.jobs = append(s.jobs, job)
+
+	return job
 }
 
 // Entries ...
@@ -94,7 +96,7 @@ func (s *Scheduler) Stop() {
 
 func (s *Scheduler) RemoveJob(name string) bool {
 	pos := s.posJob(name)
-	if pos == -1 {
+	if pos < 0 {
 		return false
 	}
 
@@ -107,10 +109,6 @@ func (s *Scheduler) run() {
 
 	for {
 		sort.Sort(s)
-
-		for idx := range s.jobs {
-			fmt.Println(s.jobs[idx].jobName)
-		}
 
 		var timer *time.Timer
 		now := time.Now()
@@ -126,11 +124,9 @@ func (s *Scheduler) run() {
 			case now := <-timer.C:
 
 				for idx := range s.jobs {
-					fmt.Println(s.jobs[idx].jobName)
 					if now.After(s.jobs[idx].nextTime) {
 						s.jobs[idx].jobFunc.Run()
-						s.jobs[idx].lastTime = now
-						s.jobs[idx].nextTime = s.jobs[idx].lastTime.Add(s.jobs[idx].period * time.Second)
+						s.jobs[idx].shouldNextTime()
 					} else {
 						break
 					}
@@ -159,6 +155,58 @@ func (s *Scheduler) posJob(name string) int {
 
 // job
 
+func (j *Job) Go() {
+	j.shouldNextTime()
+}
+
+func (j *Job) shouldNextTime() {
+	j.lastTime = time.Now()
+
+	if j.period == 0 {
+		switch j.unit {
+		case "seconds":
+			j.period = time.Duration(j.interval)
+		case "minutes":
+			j.period = time.Duration(j.interval * 60)
+		case "hours":
+			j.period = time.Duration(j.interval * 60 * 60)
+		case "days":
+			j.period = time.Duration(j.interval * 60 * 60 * 24)
+		}
+	}
+
+	j.nextTime = j.lastTime.Add(j.period * time.Second)
+}
+
+func (j *Job) Every(interval uint64) *Job {
+	j.interval = interval
+	return j
+}
+
+func (j *Job) Seconds() *Job {
+	j.unit = "seconds"
+	return j
+}
+
+func (j *Job) Minutes() *Job {
+	j.unit = "minutes"
+	return j
+}
+
+func (j *Job) Hours() *Job {
+	j.unit = "minutes"
+	return j
+}
+
+func (j *Job) Days() *Job {
+	j.unit = "days"
+	return j
+}
+
 func (j *Job) GetName() string {
 	return j.jobName
+}
+
+func (j *Job) SetName(name string) {
+	j.jobName = name
 }
