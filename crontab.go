@@ -10,7 +10,7 @@ type Scheduler struct {
 
 	running bool
 
-	stop chan bool
+	stop chan struct{}
 }
 
 type Job struct {
@@ -40,7 +40,7 @@ func NewSchedule() *Scheduler {
 	return &Scheduler{
 		jobs:    nil,
 		running: false,
-		stop:    make(chan bool, 1),
+		stop:    make(chan struct{}, 1),
 	}
 }
 
@@ -60,14 +60,13 @@ func (s *Scheduler) Less(i, j int) bool {
 }
 
 // add job
-func (s *Scheduler) NewJob(Name string, jobFunc func()) *Job {
+func (s *Scheduler) NewJob(Name string) *Job {
 	job := &Job{
 		interval: 0,
 		period: 0,
 		lastTime: time.Unix(0, 0),
 		nextTime: time.Unix(0,0),
 		jobName:  Name,
-		jobFunc:  FuncJob(jobFunc),
 	}
 	s.jobs = append(s.jobs, job)
 
@@ -91,7 +90,7 @@ func (s *Scheduler) Stop() {
 		return
 	}
 	s.running = false
-	s.stop <- true
+	s.stop <- struct{}{}
 }
 
 func (s *Scheduler) RemoveJob(name string) bool {
@@ -155,7 +154,9 @@ func (s *Scheduler) posJob(name string) int {
 
 // job
 
-func (j *Job) Go() {
+func (j *Job) Do(jobFunc func()) {
+	j.jobFunc = jobFunc
+
 	j.shouldNextTime()
 }
 
