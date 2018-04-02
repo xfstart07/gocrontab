@@ -34,9 +34,13 @@ func main() {
 		fmt.Println("test2.....")
 	})
 
+	scheduler.NewJob("testb").Every(1).Days().At(12, 0).Do(func() {
+		fmt.Println("testb...")
+	})
+
 	entries := scheduler.Entries()
 	for idx := range entries {
-		fmt.Println(entries[idx].GetName())
+		fmt.Printf("%+v\n", entries[idx])
 	}
 	fmt.Println(scheduler.Entries())
 }

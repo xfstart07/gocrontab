@@ -3,7 +3,11 @@ package gocrontab
 import (
 	"sort"
 	"time"
+	"github.com/pkg/errors"
+	"fmt"
 )
+
+var loc = time.Local
 
 type Scheduler struct {
 	jobs []*Job
@@ -201,6 +205,27 @@ func (j *Job) Hours() *Job {
 
 func (j *Job) Days() *Job {
 	j.unit = "days"
+	return j
+}
+
+// 时间：小时分钟，18, 20
+func (j *Job) At(hour, min uint) *Job {
+	if (hour < 0 || hour > 23) || (min < 0 || min > 59) {
+		panic(errors.New("时间范围不对"))
+	}
+
+	at := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), int(hour), int(min), 0, 0, loc)
+	if j.unit == "days" && j.interval == 1 {
+		if time.Now().After(at) {
+			j.lastTime = at
+		} else {
+			dayDuration, _ := time.ParseDuration("-24h")
+			j.lastTime = at.Add(dayDuration)
+
+			fmt.Println(j.lastTime)
+		}
+	}
+
 	return j
 }
 
