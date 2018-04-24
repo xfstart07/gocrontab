@@ -1,9 +1,10 @@
 package main
 
 import (
+	"time"
+
 	"github.com/xfstart07/gocrontab"
 	log "github.com/xfstart07/logger"
-	"time"
 )
 
 func main() {
@@ -17,6 +18,8 @@ func main() {
 	scheduler.NewJob("test2").Every(15).Seconds().Do(func() {
 		log.Println("test2.....")
 	})
+
+	scheduler.NewJob("taskWithParams").Every(10).Seconds().Do(taskWithParams, 1, "hello")
 
 	log.Println(scheduler.Entries())
 	for {
@@ -46,3 +49,6 @@ func main() {
 	log.Println(scheduler.Entries())
 }
 
+func taskWithParams(a int, b string) {
+	log.Println(a, b)
+}

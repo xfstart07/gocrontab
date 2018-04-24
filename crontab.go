@@ -1,10 +1,12 @@
 package gocrontab
 
 import (
+	"fmt"
+	"reflect"
 	"sort"
 	"time"
+
 	"github.com/pkg/errors"
-	"fmt"
 )
 
 var loc = time.Local
@@ -23,7 +25,9 @@ type Job struct {
 	jobName string
 
 	// 存储函数Map
-	jobFunc FuncJob
+	jobFunc interface{}
+
+	jobParams []interface{}
 
 	interval uint64 // 设定为秒
 
@@ -36,9 +40,17 @@ type Job struct {
 	nextTime time.Time // 下次运行时间
 }
 
-type FuncJob func()
+// TODO 使用 reflect 进行调用
+func (j Job) Run() {
+	fn := reflect.ValueOf(j.jobFunc)
 
-func (f FuncJob) Run() { f() }
+	fparam := make([]reflect.Value, len(j.jobParams))
+	for key, value := range j.jobParams {
+		fparam[key] = reflect.ValueOf(value)
+	}
+
+	fn.Call(fparam)
+}
 
 func NewSchedule() *Scheduler {
 	return &Scheduler{
@@ -67,9 +79,9 @@ func (s *Scheduler) Less(i, j int) bool {
 func (s *Scheduler) NewJob(Name string) *Job {
 	job := &Job{
 		interval: 0,
-		period: 0,
+		period:   0,
 		lastTime: time.Unix(0, 0),
-		nextTime: time.Unix(0,0),
+		nextTime: time.Unix(0, 0),
 		jobName:  Name,
 	}
 	s.jobs = append(s.jobs, job)
@@ -128,7 +140,7 @@ func (s *Scheduler) run() {
 
 				for idx := range s.jobs {
 					if now.After(s.jobs[idx].nextTime) {
-						s.jobs[idx].jobFunc.Run()
+						s.jobs[idx].Run()
 						s.jobs[idx].shouldNextTime()
 					} else {
 						break
@@ -158,8 +170,9 @@ func (s *Scheduler) posJob(name string) int {
 
 // job
 
-func (j *Job) Do(jobFunc func()) {
+func (j *Job) Do(jobFunc interface{}, params ...interface{}) {
 	j.jobFunc = jobFunc
+	j.jobParams = params
 
 	j.shouldNextTime()
 }
