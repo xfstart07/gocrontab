@@ -51,3 +51,7 @@ for idx := range entries {
 }
 fmt.Println(scheduler.Entries())
 ```
+
+## License
+
+The MIT License (MIT) - see LICENSE for more details
