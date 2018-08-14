@@ -40,7 +40,7 @@ type Job struct {
 	nextTime time.Time // 下次运行时间
 }
 
-// TODO 使用 reflect 进行调用
+// 使用 reflect 进行调用
 func (j Job) Run() {
 	fn := reflect.ValueOf(j.jobFunc)
 
@@ -80,8 +80,6 @@ func (s *Scheduler) NewJob(Name string) *Job {
 	job := &Job{
 		interval: 0,
 		period:   0,
-		lastTime: time.Unix(0, 0),
-		nextTime: time.Unix(0, 0),
 		jobName:  Name,
 	}
 	s.jobs = append(s.jobs, job)
@@ -121,15 +119,18 @@ func (s *Scheduler) RemoveJob(name string) bool {
 }
 
 func (s *Scheduler) run() {
-
+	fmt.Println("schedule running")
 	for {
 		sort.Sort(s)
 
 		var timer *time.Timer
 		now := time.Now()
 		if len(s.jobs) == 0 || s.jobs[0].nextTime.IsZero() {
+			fmt.Println("iszero")
 			timer = time.NewTimer(10000 * time.Hour)
 		} else {
+			fmt.Println(s.jobs[0].nextTime)
+			fmt.Println(s.jobs[0].nextTime.Sub(now))
 			timer = time.NewTimer(s.jobs[0].nextTime.Sub(now))
 		}
 
@@ -140,7 +141,9 @@ func (s *Scheduler) run() {
 
 				for idx := range s.jobs {
 					if now.After(s.jobs[idx].nextTime) {
-						s.jobs[idx].Run()
+						go s.jobs[idx].Run()
+
+						s.jobs[idx].lastTime = time.Now()
 						s.jobs[idx].shouldNextTime()
 					} else {
 						break
@@ -178,7 +181,9 @@ func (j *Job) Do(jobFunc interface{}, params ...interface{}) {
 }
 
 func (j *Job) shouldNextTime() {
-	j.lastTime = time.Now()
+	if j.lastTime.IsZero() {
+		j.lastTime = time.Now()
+	}
 
 	if j.period == 0 {
 		switch j.unit {
@@ -228,6 +233,9 @@ func (j *Job) At(hour, min uint) *Job {
 	}
 
 	at := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), int(hour), int(min), 0, 0, loc)
+	fmt.Println(at, loc.String())
+	fmt.Println(time.Now(), loc.String())
+	fmt.Println(j.lastTime)
 	if j.unit == "days" && j.interval == 1 {
 		if time.Now().After(at) {
 			j.lastTime = at
