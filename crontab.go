@@ -1,7 +1,6 @@
 package gocrontab
 
 import (
-	"fmt"
 	"reflect"
 	"sort"
 	"time"
@@ -119,7 +118,6 @@ func (s *Scheduler) RemoveJob(name string) bool {
 }
 
 func (s *Scheduler) run() {
-	fmt.Println("schedule running")
 	for {
 		sort.Sort(s)
 
@@ -230,17 +228,12 @@ func (j *Job) At(hour, min uint) *Job {
 	}
 
 	at := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), int(hour), int(min), 0, 0, loc)
-	fmt.Println(at, loc.String())
-	fmt.Println(time.Now(), loc.String())
-	fmt.Println(j.lastTime)
 	if j.unit == "days" && j.interval == 1 {
 		if time.Now().After(at) {
 			j.lastTime = at
 		} else {
 			dayDuration, _ := time.ParseDuration("-24h")
 			j.lastTime = at.Add(dayDuration)
-
-			fmt.Println(j.lastTime)
 		}
 	}
 
