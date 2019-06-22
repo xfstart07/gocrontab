@@ -126,11 +126,8 @@ func (s *Scheduler) run() {
 		var timer *time.Timer
 		now := time.Now()
 		if len(s.jobs) == 0 || s.jobs[0].nextTime.IsZero() {
-			fmt.Println("iszero")
 			timer = time.NewTimer(10000 * time.Hour)
 		} else {
-			fmt.Println(s.jobs[0].nextTime)
-			fmt.Println(s.jobs[0].nextTime.Sub(now))
 			timer = time.NewTimer(s.jobs[0].nextTime.Sub(now))
 		}
 
@@ -229,7 +226,7 @@ func (j *Job) Days() *Job {
 // 时间：小时分钟，18, 20
 func (j *Job) At(hour, min uint) *Job {
 	if (hour < 0 || hour > 23) || (min < 0 || min > 59) {
-		panic(errors.New("时间范围不对"))
+		panic(errors.New("wrong time range"))
 	}
 
 	at := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), int(hour), int(min), 0, 0, loc)
@@ -254,6 +251,6 @@ func (j *Job) GetName() string {
 	return j.jobName
 }
 
-func (j *Job) SetName(name string) {
+func (j *Job) Rename(name string) {
 	j.jobName = name
 }
