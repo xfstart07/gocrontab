@@ -39,6 +39,7 @@ type Job struct {
 	nextTime time.Time // 下次运行时间
 }
 
+// Run 运行 Job
 // 使用 reflect 进行调用
 func (j Job) Run() {
 	fn := reflect.ValueOf(j.jobFunc)
@@ -51,6 +52,7 @@ func (j Job) Run() {
 	fn.Call(fparam)
 }
 
+// NewSchedule 新建
 func NewSchedule() *Scheduler {
 	return &Scheduler{
 		jobs:    nil,
@@ -61,20 +63,22 @@ func NewSchedule() *Scheduler {
 
 // sort
 
+// Len ...
 func (s *Scheduler) Len() int {
 	return len(s.jobs)
 }
 
+// Swap ...
 func (s *Scheduler) Swap(i, j int) {
 	s.jobs[i], s.jobs[j] = s.jobs[j], s.jobs[i]
 }
 
-// 判断 i 是否在 j 之前
+// Less 判断 i 是否在 j 之前
 func (s *Scheduler) Less(i, j int) bool {
 	return s.jobs[i].nextTime.Before(s.jobs[j].nextTime)
 }
 
-// add job
+// NewJob
 func (s *Scheduler) NewJob(Name string) *Job {
 	job := &Job{
 		interval: 0,
@@ -106,6 +110,7 @@ func (s *Scheduler) Stop() {
 	s.stop <- struct{}{}
 }
 
+// RemoveJob ...
 func (s *Scheduler) RemoveJob(name string) bool {
 	pos := s.posJob(name)
 	if pos < 0 {
@@ -168,6 +173,7 @@ func (s *Scheduler) posJob(name string) int {
 
 // job
 
+// Do ...
 func (j *Job) Do(jobFunc interface{}, params ...interface{}) {
 	j.jobFunc = jobFunc
 	j.jobParams = params
@@ -196,32 +202,37 @@ func (j *Job) shouldNextTime() {
 	j.nextTime = j.lastTime.Add(j.period * time.Second)
 }
 
+// Every
 func (j *Job) Every(interval uint64) *Job {
 	j.interval = interval
 	return j
 }
 
+// Seconds unit
 func (j *Job) Seconds() *Job {
 	j.unit = "seconds"
 	return j
 }
 
+// Minutes unit
 func (j *Job) Minutes() *Job {
 	j.unit = "minutes"
 	return j
 }
 
+// Hours unit
 func (j *Job) Hours() *Job {
 	j.unit = "minutes"
 	return j
 }
 
+// Days unit
 func (j *Job) Days() *Job {
 	j.unit = "days"
 	return j
 }
 
-// 时间：小时分钟，18, 20
+// At unit 时间：小时分钟，18, 20
 func (j *Job) At(hour, min uint) *Job {
 	if (hour < 0 || hour > 23) || (min < 0 || min > 59) {
 		panic(errors.New("wrong time range"))
@@ -240,10 +251,12 @@ func (j *Job) At(hour, min uint) *Job {
 	return j
 }
 
+// GetName ...
 func (j *Job) GetName() string {
 	return j.jobName
 }
 
+// Rename ...
 func (j *Job) Rename(name string) {
 	j.jobName = name
 }
